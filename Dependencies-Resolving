@@ -1,0 +1,103 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <stack>
+#include <windows.h>
+#include <io.h>
+
+using namespace std;
+
+int main(){
+    int helper = 0;
+    string line;
+    stack<string> dependencies;
+    //създаваме си стек, в който са записани кои файлове трябва да инсталираме
+    ifstream myfile ("dependencies.json");
+    if (myfile.is_open()){
+        while ( getline (myfile,line) ){
+            if(line.find("[") !=  string::npos){
+                int index = line.find("[") + 1;
+                string new_dependency;
+                while(line[index] != ']'){
+                    if(line[index] != ',' && line[index] != ' ' && line[index] != '"')
+                        new_dependency.push_back(line[index]);
+                    else if(line[index] == '"'){
+                        if(new_dependency.size() > 0) dependencies.push(new_dependency);
+                        new_dependency.clear();
+                    }
+                    index++;
+                }
+            }
+        }
+        myfile.close();
+    }
+    else cout << "Unable to open file";
+    vector< pair<string, vector<string> > > all_packages;
+    string key;
+    int index;
+    //създаваме си масив, който показва инсталацията на всеки файл кои други файлове изисква
+    ifstream myfile1 ("all_packages.json");
+    if (myfile1.is_open()){
+        while ( getline (myfile1,line) ){
+            if(line.find('"') !=  string::npos){
+                index = line.find('"') + 1;
+                key.clear();
+                while(line[index] != '"'){
+                    key.push_back(line[index]);
+                    index++;
+                }
+            }
+            if(line.find("[") !=  string::npos){
+                index = line.find("[") + 1;
+                vector<string> value;
+                string new_value;
+                while(line[index] != ']'){
+                    if(line[index] != ',' && line[index] != ' ' && line[index] != '"')
+                        new_value.push_back(line[index]);
+                    else if(line[index] == '"'){
+                        if(new_value.size() > 0) value.push_back(new_value);
+                        new_value.clear();
+                    }
+                    index++;
+                }
+                pair<string, vector<string> > new_package(key, value);
+                all_packages.push_back(new_package);
+            }
+        }
+        myfile.close();
+    }
+    string new_folder = "installed_modules";
+	if ( access ( new_folder.c_str(), 0 ) != 0 )
+		CreateDirectory ( new_folder.c_str(), NULL );
+    string current_dependency;
+    while(!dependencies.empty()){
+        current_dependency = dependencies.top();
+        dependencies.pop();
+        if ( access ( (new_folder + "\\" + current_dependency).c_str(), 0 ) != 0 ){
+            CreateDirectory ((new_folder + "\\" + current_dependency).c_str(), NULL );
+            cout<<"Installing "<<current_dependency<<"."<<endl;
+            for(int i = 0; i < all_packages.size(); i++){
+                if(current_dependency.compare(all_packages[i].first) == 0){
+                    if(all_packages[i].second.size() == 1){
+                        cout<<"In order to install "<<current_dependency<<", we need "<<all_packages[i].second[0]<<"."<<endl;
+                        dependencies.push(all_packages[i].second[0]);
+                    }
+                    if(all_packages[i].second.size() > 1){
+                        helper = all_packages[i].second.size();
+                        cout<<"In order to install "<<current_dependency<<", we need ";
+                        for(int j = 0; j < all_packages[i].second.size() - 1; j++){
+                            cout<<all_packages[i].second[j]<<" and ";
+                            dependencies.push(all_packages[i].second[helper - j -1]);
+                        }
+                        cout<<all_packages[i].second[all_packages[i].second.size() - 1]<<"."<<endl;
+                        dependencies.push(all_packages[i].second[0]);
+                    }
+                }
+            }
+        }
+        else cout<<current_dependency<<" is already installed."<<endl;
+    }
+    cout<<"All done."<<endl;
+    return 0;
+}
