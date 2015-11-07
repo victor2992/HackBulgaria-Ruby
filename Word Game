@@ -92,6 +92,7 @@ int main(){
     char word[100];
     cin>>word;
     int number_words = 0;
+    //ще брои грешно ако думата е само от един символ
     for(int i = 0; i < table.size(); i++)
         for(int j = 0; j < table[i].size(); j++)
             if(table[i][j] == word[0]){
@@ -102,6 +103,12 @@ int main(){
                 number_words += across_left(word,i,j);
                 number_words += across_right(word,i,j);
             }
+    if(word[1] == '\0'){
+        number_words = 0;
+        for(int i = 0; i < table.size(); i++)
+            for(int j = 0; j < table[i].size(); j++)
+                if(table[i][j] == word[0]) number_words++;
+    }
     cout<<number_words<<endl;
     return 0;
 }
