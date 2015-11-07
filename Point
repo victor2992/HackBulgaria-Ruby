@@ -1,0 +1,20 @@
+def calculate_move(current_x, current_y, str)
+  warp_helper = 1
+  counter = 0
+  while counter < str.size
+    symbol = str[counter]
+    if symbol == ">"
+	  current_x += warp_helper
+	elsif symbol == "<"
+	  current_x -= warp_helper
+	elsif symbol == "v"
+	  current_y += warp_helper
+	elsif symbol == "^"
+	  current_y -= warp_helper
+	elsif symbol == "~"
+	  warp_helper *= -1
+	end
+	counter += 1
+  end
+  print "(", current_x, ", ", current_y, ")"
+end
